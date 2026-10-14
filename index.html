@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Akkusativ – Personalpronomen Quiz</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#eef0f3;font-family:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;color:#222;padding:16px}
+  .card{width:100%;max-width:600px;background:#fff;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.08);padding:24px;overflow:hidden;position:relative}
+  .topbar{display:flex;justify-content:space-between;align-items:center;font-weight:600;color:#555;padding-bottom:14px;border-bottom:1px solid #eee;margin-bottom:20px;font-size:.95rem;gap:8px}
+  .points{background:#e8f0fe;color:#1a56db;padding:4px 12px;border-radius:999px;white-space:nowrap}
+  .progress{height:6px;background:#eee;border-radius:99px;margin:-8px 0 20px;overflow:hidden}
+  .progress div{height:100%;width:0;background:#1a56db;transition:width .3s}
+  h1{margin:0 0 6px;font-size:1.5rem;text-align:center}
+  .sub{text-align:center;color:#777;margin:0 0 22px}
+  label{font-weight:600;display:block;margin:14px 0 8px}
+  .section{display:inline-block;font-size:.78rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#1a56db;background:#e8f0fe;border-radius:6px;padding:3px 9px;margin-bottom:12px}
+  .question{font-size:1.3rem;line-height:1.55;margin:0 0 10px}
+  .hint{font-style:italic;color:#b45309;margin:0 0 18px;font-size:.98rem}
+  input[type=text],select{width:100%;font-size:1.1rem;padding:12px 14px;border:2px solid #d5d9e0;border-radius:10px;outline:none;transition:border-color .2s;background:#fff;color:#222;font-family:inherit}
+  input[type=text]:focus,select:focus{border-color:#1a56db}
+  input[type=text]:disabled{background:#f3f4f6;color:#555}
+  button{width:100%;margin-top:14px;padding:13px;font-size:1.05rem;font-weight:600;color:#fff;background:#1a56db;border:none;border-radius:10px;cursor:pointer;transition:background .2s,transform .1s;font-family:inherit}
+  button:hover{background:#1646b3}
+  button:active{transform:scale(.98)}
+  .feedback{margin-top:16px;padding:12px 14px;border-radius:10px;font-size:1.05rem;display:none}
+  .feedback.ok{display:block;background:#e7f7ec;color:#157f3b;font-weight:700}
+  .feedback.bad{display:block;background:#fdecec;color:#c62828}
+  .feedback.bad .title{font-weight:700}
+  .feedback .note{display:block;margin-top:6px;font-size:.92rem;color:#555}
+  .feedback .expl{display:block;margin-top:10px;padding-top:8px;border-top:1px dashed rgba(0,0,0,.2);font-size:.92rem;font-weight:400;color:#444}
+  .hidden{display:none!important}
+  .result{text-align:center}
+  .score{font-size:3rem;font-weight:800;margin:10px 0;color:#1a56db}
+  .emoji{font-size:2.6rem;letter-spacing:6px;display:inline-block}
+  .emoji.celebrate{animation:pop 1s ease infinite}
+  .msg{font-size:1.1rem;line-height:1.7;margin:8px 0 4px}
+  @keyframes pop{0%,100%{transform:scale(1) rotate(0)}25%{transform:scale(1.25) rotate(-8deg)}75%{transform:scale(1.25) rotate(8deg)}}
+  .confetti{position:absolute;top:-10px;width:10px;height:14px;opacity:.9;animation:fall linear forwards;pointer-events:none}
+  @keyframes fall{to{transform:translateY(620px) rotate(720deg);opacity:0}}
+  @media(max-width:480px){.card{padding:18px}.question{font-size:1.15rem}}
+</style>
+</head>
+<body>
+<div class="card" id="card">
+
+  <!-- Startseite -->
+  <div id="start">
+    <h1>Akkusativ – Personalpronomen</h1>
+    <p class="sub">Lücken ergänzen · ganze Sätze</p>
+    <label for="nameInput">Wie heißt du?</label>
+    <input type="text" id="nameInput" placeholder="Dein Name" autocomplete="off" maxlength="40">
+    <div id="nameError" style="color:#c62828;margin-top:8px;display:none">Bitte gib deinen Namen ein.</div>
+    <label for="sectionSelect">Aufgabenbereich</label>
+    <select id="sectionSelect"></select>
+    <button id="startBtn">Los geht's!</button>
+  </div>
+
+  <!-- Quiz -->
+  <div id="quiz" class="hidden">
+    <div class="topbar">
+      <span id="counter">Frage 1 von 1</span>
+      <span class="points">Punkte: <span id="score">0</span></span>
+    </div>
+    <div class="progress"><div id="bar"></div></div>
+    <span class="section" id="secLabel"></span>
+    <p class="question" id="question"></p>
+    <p class="hint" id="hint"></p>
+    <input type="text" id="answer" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Deine Antwort …">
+    <div class="feedback" id="feedback"></div>
+    <button id="checkBtn">Korrigieren</button>
+    <button id="nextBtn" class="hidden">Nächste Frage</button>
+  </div>
+
+  <!-- Ergebnis -->
+  <div id="result" class="result hidden">
+    <div class="emoji" id="resEmoji"></div>
+    <h1 id="resName"></h1>
+    <div class="score" id="resScore"></div>
+    <p class="msg" id="resMsg"></p>
+    <button id="restartBtn">Nochmal starten</button>
+    <button id="menuBtn" style="background:#6b7280">Zurück zur Startseite</button>
+  </div>
+
+</div>
+
+<script>
+const SECTIONS = {
+  a1: "Akkusativ: Lücken ergänzen",
+  a2: "Akkusativ: Antworten mit ganzen Sätzen"
+};
+
+const Q = (s, q, hint, a, alt) => ({ s, q, hint, a, alt });
+const SATZ = "Antworte mit einem ganzen Satz („Nein, …“) und benutze Personalpronomen.";
+
+const questions = [
+  /* ---------- Lücken ergänzen ---------- */
+  Q("a1","Verstehst du uns? – Nein, ich verstehe ____ nicht.","Akkusativ: Personalpronomen","euch"),
+  Q("a1","Siehst du heute Wolfgang? – Nein, ich sehe ____ heute nicht, aber morgen.","Akkusativ: Personalpronomen","ihn"),
+  Q("a1","Liebst du Petra? – Nein, ich liebe ____ nicht.","Akkusativ: Personalpronomen","sie"),
+  Q("a1","Liebst du Peter? – Ja, ich liebe ____.","Akkusativ: Personalpronomen","ihn"),
+  Q("a1","Liebst du dein Kind? – Ja, ich liebe ____ sehr.","Akkusativ: das Kind → ?","es"),
+  Q("a1","Liebst du mich auch? – Ja, ____ liebe ich auch.","Akkusativ: Antwort auf „mich“","dich"),
+  Q("a1","Siehst du mich? – Nein, ich sehe ____ nicht.","Akkusativ: Antwort auf „mich“","dich"),
+  Q("a1","Begleitest du den Schüler? – Nein, ich begleite ____ nicht.","Akkusativ: der Schüler → ?","ihn"),
+  Q("a1","Siehst du das Kino? – Ja, ich sehe ____.","Akkusativ: das Kino → ?","es"),
+  Q("a1","Siehst du auch die Autos? – Nein, ich sehe ____ nicht.","Akkusativ Plural","sie"),
+  Q("a1","Kaufst du die Flasche Wein? – Nein, ich kaufe ____ nicht.","Akkusativ: die Flasche → ?","sie"),
+  Q("a1","Ist er krank? – Nein, ____ ist nicht krank.","Nominativ: Personalpronomen","er"),
+  Q("a1","Sucht er Herrn Müller? – Nein, er sucht ____ nicht.","Akkusativ: Herr Müller → ?","ihn"),
+  Q("a1","Stiehlt das Kind das Buch? – Nein, ____ stiehlt ____ nicht.","Zwei Lücken: Nominativ + Akkusativ","es es"),
+  Q("a1","Stiehlt Martina den Wagen? – Nein, ____ stiehlt ____ nicht.","Zwei Lücken: Nominativ + Akkusativ","sie ihn"),
+  Q("a1","Stiehlt Martin die Zeitung? – Nein, ____ stiehlt ____ nicht.","Zwei Lücken: Nominativ + Akkusativ","er sie"),
+  Q("a1","Stiehlt der Koch den Fisch? – Nein, ____ stiehlt ____ nicht.","Zwei Lücken: Nominativ + Akkusativ","er ihn"),
+  Q("a1","Stehlen Ute und Ralf die Eier? – Nein, ____ stehlen ____ nicht.","Zwei Lücken: Nominativ + Akkusativ","sie sie"),
+  Q("a1","Wie viel kosten die Zitronen? – ____ kosten nicht viel.","Nominativ Plural","Sie"),
+  Q("a1","Brauchst du heute den Mantel? – Ja, ich brauche ____.","Akkusativ: der Mantel → ?","ihn"),
+  Q("a1","Brauchen Sie heute das Geld? – Ja, ____ brauche ____ heute.","Zwei Lücken: Nominativ + Akkusativ","ich es"),
+  Q("a1","Brauchen sie heute das Radio? – Ja, ____ brauchen ____ heute.","Zwei Lücken: Nominativ + Akkusativ","sie es"),
+  Q("a1","Bist du fleißig? – Ja, ____ bin sehr fleißig.","Nominativ: Antwort auf „du“","ich"),
+  Q("a1","Sind Sie morgen Abend da? – Nein, morgen Abend sind ____ nicht da.","Nominativ: Antwort auf „Sie“","wir"),
+  Q("a1","Seid ihr morgen in Rom? – Ja, dort sind ____ morgen.","Nominativ: Antwort auf „ihr“","wir"),
+
+  /* ---------- Ganze Sätze ---------- */
+  Q("a2","Begleitest du heute Abend Karin?",SATZ,"Nein, ich begleite sie heute Abend nicht.",["Nein, heute Abend begleite ich sie nicht."]),
+  Q("a2","Bestellst du einen Kaffee?",SATZ,"Nein, ich bestelle ihn nicht."),
+  Q("a2","Bezahlst du den Friseur?",SATZ,"Nein, ich bezahle ihn nicht."),
+  Q("a2","Brauchst du heute deinen Wagen?",SATZ,"Nein, ich brauche ihn nicht.",["Nein, ich brauche ihn heute nicht."]),
+  Q("a2","Fragt Eva den Studenten?",SATZ,"Nein, sie fragt ihn nicht."),
+  Q("a2","Hast du die Flasche Wein?",SATZ,"Nein, ich habe sie nicht."),
+  Q("a2","Kaufst du den Wagen?",SATZ,"Nein, ich kaufe ihn nicht."),
+  Q("a2","Liebst du mich?",SATZ,"Nein, ich liebe dich nicht."),
+  Q("a2","Suchen Sie Herrn Maier?",SATZ,"Nein, ich suche ihn nicht."),
+  Q("a2","Isst du jetzt das Spiegelei?",SATZ,"Nein, ich esse es nicht.",["Nein, ich esse es jetzt nicht."]),
+  Q("a2","Nehmen Sie die Zeitung?",SATZ,"Nein, ich nehme sie nicht."),
+  Q("a2","Triffst du heute Abend Gerda?",SATZ,"Nein, heute Abend treffe ich sie nicht.",["Nein, ich treffe sie heute Abend nicht."]),
+  Q("a2","Verstehen Sie den Kaufmann?",SATZ,"Nein, ich verstehe ihn nicht."),
+  Q("a2","Begleiten Sie die Kinder?",SATZ,"Nein, ich begleite sie nicht."),
+  Q("a2","Bestellen Sie den Mantel?",SATZ,"Nein, ich bestelle ihn nicht."),
+  Q("a2","Bezahlen Sie das Frühstück?",SATZ,"Nein, ich bezahle es nicht."),
+  Q("a2","Braucht Hans heute Ute?",SATZ,"Nein, heute braucht er sie nicht.",["Nein, er braucht sie heute nicht."]),
+  Q("a2","Braucht Ute heute Hans?",SATZ,"Nein, heute braucht sie ihn nicht.",["Nein, sie braucht ihn heute nicht."]),
+  Q("a2","Fragt Herr Schmidt Herrn Mull?",SATZ,"Nein, er fragt ihn nicht."),
+  Q("a2","Haben Sie das Geld?",SATZ,"Nein, ich habe es nicht."),
+  Q("a2","Haben Sie Geld?",SATZ+" (Achtung: Geld ohne Artikel!)","Nein, ich habe kein Geld."),
+  Q("a2","Kauft ihr die Apfelsinen?",SATZ,"Nein, wir kaufen sie nicht."),
+  Q("a2","Sucht ihr Herrn Müller?",SATZ,"Nein, wir suchen ihn nicht."),
+  Q("a2","Esst ihr den Fisch?",SATZ,"Nein, wir essen ihn nicht."),
+  Q("a2","Esst ihr Fisch?",SATZ+" (Achtung: Fisch ohne Artikel!)","Nein, wir essen keinen Fisch.")
+];
+
+/* Erklärungen: Wer macht etwas (Nominativ) und wen/was betrifft es (Akkusativ)? */
+const EXPL = {
+  "Stiehlt das Kind das Buch? – Nein, ____ stiehlt ____ nicht.": "Wer stiehlt? „Das Kind“ ist das Subjekt (Nominativ) → es. Was wird gestohlen? „Das Buch“ ist das Objekt (Akkusativ) → es.",
+  "Stiehlt Martina den Wagen? – Nein, ____ stiehlt ____ nicht.": "Wer stiehlt? „Martina“ ist das Subjekt (Nominativ) → sie. Was wird gestohlen? „Den Wagen“ ist das Objekt (Akkusativ, maskulin) → ihn.",
+  "Stiehlt Martin die Zeitung? – Nein, ____ stiehlt ____ nicht.": "Wer stiehlt? „Martin“ ist das Subjekt (Nominativ) → er. Was wird gestohlen? „Die Zeitung“ ist das Objekt (Akkusativ, feminin) → sie.",
+  "Stiehlt der Koch den Fisch? – Nein, ____ stiehlt ____ nicht.": "Wer stiehlt? „Der Koch“ ist das Subjekt (Nominativ) → er. Was wird gestohlen? „Den Fisch“ ist das Objekt (Akkusativ, maskulin) → ihn.",
+  "Stehlen Ute und Ralf die Eier? – Nein, ____ stehlen ____ nicht.": "Wer stiehlt? „Ute und Ralf“ sind das Subjekt (Nominativ Plural) → sie. Was wird gestohlen? „Die Eier“ sind das Objekt (Akkusativ Plural) → sie.",
+  "Brauchen Sie heute das Geld? – Ja, ____ brauche ____ heute.": "Du antwortest in der Ich-Form: Wer braucht? → ich (Nominativ). Was wird gebraucht? „Das Geld“ (Akkusativ, Neutrum) → es.",
+  "Brauchen sie heute das Radio? – Ja, ____ brauchen ____ heute.": "Wer braucht? „sie“ (Plural) ist das Subjekt (Nominativ) → sie. Was wird gebraucht? „Das Radio“ (Akkusativ, Neutrum) → es.",
+  "Fragt Eva den Studenten?": "Wer fragt? „Eva“ ist das Subjekt (Nominativ) → sie. Wen fragt sie? „Den Studenten“ ist das Objekt (Akkusativ) → ihn.",
+  "Braucht Hans heute Ute?": "Wer braucht? „Hans“ ist das Subjekt (Nominativ) → er. Wer wird gebraucht? „Ute“ ist das Objekt (Akkusativ) → sie. Also: er braucht sie – nicht umgekehrt!",
+  "Braucht Ute heute Hans?": "Wer braucht? „Ute“ ist das Subjekt (Nominativ) → sie. Wer wird gebraucht? „Hans“ ist das Objekt (Akkusativ) → ihn. Also: sie braucht ihn – nicht „er braucht sie“ (das wäre die Frage „Braucht Hans heute Ute?“).",
+  "Fragt Herr Schmidt Herrn Mull?": "Wer fragt? „Herr Schmidt“ ist das Subjekt (Nominativ) → er. Wen fragt er? „Herrn Mull“ ist das Objekt (Akkusativ) → ihn."
+};
+questions.forEach(x => { if(EXPL[x.q]) x.expl = EXPL[x.q]; });
+
+/* ---------- App-Logik ---------- */
+const $ = id => document.getElementById(id);
+let list = [], current = 0, score = 0, playerName = "", answered = false;
+
+function normalize(s){
+  return s.normalize("NFC").toLowerCase()
+    .replace(/[.,;:!?¿"'„“”‚‘’()\-–—_\/]/g, " ")
+    .replace(/\s+/g, " ").trim();
+}
+
+function show(id){
+  ["start","quiz","result"].forEach(x => $(x).classList.toggle("hidden", x !== id));
+  document.querySelectorAll(".confetti").forEach(e => e.remove());
+}
+
+function fillSelect(){
+  const sel = $("sectionSelect");
+  sel.innerHTML = "";
+  const all = document.createElement("option");
+  all.value = "all";
+  all.textContent = `Alle Aufgaben (${questions.length} Fragen)`;
+  sel.appendChild(all);
+  Object.keys(SECTIONS).forEach(k => {
+    const n = questions.filter(q => q.s === k).length;
+    const o = document.createElement("option");
+    o.value = k;
+    o.textContent = `${SECTIONS[k]} (${n})`;
+    sel.appendChild(o);
+  });
+}
+
+function startQuiz(){
+  const n = $("nameInput").value.trim();
+  if(!n){ $("nameError").style.display = "block"; $("nameInput").focus(); return; }
+  playerName = n;
+  const sec = $("sectionSelect").value;
+  list = sec === "all" ? questions.slice() : questions.filter(q => q.s === sec);
+  current = 0; score = 0;
+  show("quiz");
+  loadQuestion();
+}
+
+function loadQuestion(){
+  answered = false;
+  const item = list[current];
+  $("counter").textContent = `Frage ${current+1} von ${list.length}`;
+  $("score").textContent = score;
+  $("bar").style.width = (current / list.length * 100) + "%";
+  $("secLabel").textContent = SECTIONS[item.s];
+  $("question").textContent = item.q;
+  $("hint").textContent = "💡 " + item.hint;
+  const inp = $("answer");
+  inp.value = ""; inp.disabled = false;
+  $("feedback").className = "feedback";
+  $("feedback").innerHTML = "";
+  $("checkBtn").classList.remove("hidden");
+  $("nextBtn").classList.add("hidden");
+  $("nextBtn").textContent = current === list.length - 1 ? "Ergebnis anzeigen" : "Nächste Frage";
+  inp.focus();
+}
+
+function checkAnswer(){
+  if(answered) return;
+  const item = list[current];
+  const user = normalize($("answer").value);
+  const accepted = [item.a, ...(item.alt || [])].map(normalize);
+  const fb = $("feedback");
+  answered = true;
+  $("answer").disabled = true;
+
+  if(accepted.includes(user)){
+    score++;
+    $("score").textContent = score;
+    fb.className = "feedback ok";
+    fb.textContent = "✅ Richtig!";
+  } else {
+    fb.className = "feedback bad";
+    fb.innerHTML = `<span class="title">❌ Falsch!</span><br>Richtige Antwort: <b></b>` +
+      (item.alt && item.alt.length ? `<span class="note">Auch richtig: <span class="alts"></span></span>` : "");
+    fb.querySelector("b").textContent = item.a;
+    if(item.alt && item.alt.length) fb.querySelector(".alts").textContent = item.alt.join("  |  ");
+  }
+  if(item.expl){
+    const d = document.createElement("span");
+    d.className = "expl";
+    d.textContent = "💬 Erklärung: " + item.expl;
+    fb.appendChild(d);
+  }
+  $("checkBtn").classList.add("hidden");
+  $("nextBtn").classList.remove("hidden");
+  $("nextBtn").focus();
+}
+
+function nextQuestion(){
+  current++;
+  if(current >= list.length) showResult(); else loadQuestion();
+}
+
+function showResult(){
+  show("result");
+  const total = list.length;
+  const good = score > total / 2;
+  $("resName").textContent = playerName;
+  $("resScore").textContent = `${score} / ${total}`;
+  const em = $("resEmoji");
+  em.classList.remove("celebrate");
+  if(good){
+    em.textContent = "🎉🏆🎊";
+    void em.offsetWidth; em.classList.add("celebrate");
+    $("resMsg").textContent = `Herzlichen Glückwunsch, ${playerName}! Das hast du sehr gut gemacht!`;
+    launchConfetti();
+  } else {
+    em.textContent = "💪📚";
+    $("resMsg").textContent = `Nicht aufgeben, ${playerName}! Versuch es noch einmal – du schaffst das!`;
+  }
+}
+
+function launchConfetti(){
+  const colors = ["#f44336","#ff9800","#ffeb3b","#4caf50","#2196f3","#9c27b0"];
+  const box = $("card");
+  for(let i = 0; i < 45; i++){
+    const c = document.createElement("div");
+    c.className = "confetti";
+    c.style.left = Math.random() * 100 + "%";
+    c.style.background = colors[i % colors.length];
+    c.style.animationDuration = (1.5 + Math.random() * 1.5) + "s";
+    c.style.animationDelay = (Math.random() * 0.6) + "s";
+    box.appendChild(c);
+    setTimeout(() => c.remove(), 4000);
+  }
+}
+
+function restart(){
+  current = 0; score = 0;
+  show("quiz");
+  loadQuestion();
+}
+
+function toMenu(){
+  show("start");
+  $("nameInput").focus();
+}
+
+fillSelect();
+$("startBtn").addEventListener("click", startQuiz);
+$("checkBtn").addEventListener("click", checkAnswer);
+$("nextBtn").addEventListener("click", nextQuestion);
+$("restartBtn").addEventListener("click", restart);
+$("menuBtn").addEventListener("click", toMenu);
+$("nameInput").addEventListener("keydown", e => { if(e.key === "Enter") startQuiz(); });
+$("answer").addEventListener("keydown", e => {
+  if(e.key === "Enter"){ e.preventDefault(); answered ? nextQuestion() : checkAnswer(); }
+});
+document.addEventListener("keydown", e => {
+  if(e.key === "Enter" && answered && !$("quiz").classList.contains("hidden") && document.activeElement !== $("nextBtn") && document.activeElement !== $("answer")){
+    nextQuestion();
+  }
+});
+$("nameInput").focus();
+</script>
+</body>
+</html>
